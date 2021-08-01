@@ -1,13 +1,15 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/snple/mqtt)](https://pkg.go.dev/github.com/snple/mqtt)
 
-# Snple MQTT Broker
+# Snple MQTT
+
+[简体中文](README_zh.md)
 
 #### Features
-- Paho MQTT 3.0 / 3.1.1 compatible.
+- MQTT 3.1.1 compatible.
 - Full MQTT Feature-set (QoS, Retained, $SYS)
 - Trie-based Subscription model.
 - Ring Buffer packet codec.
-- TCP, Websocket, (including SSL/TLS) and Dashboard listeners.
+- TCP, Websocket, (including SSL/TLS).
 - Interfaces for Client Authentication and Topic access control.
 - Bolt-backed persistence and storage interfaces.
 - Event hooks (Recv, Send, ...), see `hook.go`.
@@ -33,7 +35,7 @@ func main() {
     // Create a TCP listener on a standard port.
     tcp := listener.NewTCP("t1", ":1883", &mqtt.AuthAllow{})
 
-    // Add the listener to the server with default options (nil).
+    // Add the listener to the server.
     err := server.AddListener(tcp)
 	if err != nil {
 		log.Fatal(err)
@@ -61,9 +63,10 @@ Authentication and ACL may be configured on a per-listener basis by providing an
 
 > If no auth controller is provided in the listener configuration, the server will default to _Allowing_ all traffic.
 
-##### SSL
+##### SSL/TLS
 
-SSL may be configured on both the TCP and Websocket listeners by providing a public-private PEM key pair to the listener configuration as `[]byte` slices.
+SSL/TLS may be configured on both the TCP and Websocket listeners.
+
 ```go
     cert, err := tls.X509KeyPair(publicCertificate, privateKey)
     if err != nil {
@@ -79,6 +82,7 @@ SSL may be configured on both the TCP and Websocket listeners by providing a pub
 #### Data Persistence
 
 Snple MQTT provides a `persistence.Store` interface for developing and attaching persistent stores to the broker. The default persistence mechanism packaged with the broker is backed by [Bolt](https://github.com/etcd-io/bbolt) and can be enabled by assigning a `*bolt.Store` to the server.
+
 ```go
     // import "github.com/snple/mqtt/persistence/bolt"
     err = server.AddStore(bolt.New("mqtt.db", nil))
@@ -87,10 +91,6 @@ Snple MQTT provides a `persistence.Store` interface for developing and attaching
     }
 ```
 > Persistence is on-demand (not flushed) and will potentially reduce throughput when compared to the standard in-memory store. Only use it if you need to maintain state through restarts.
-
-#### Paho Interoperability Test
-
-You can check the broker against the [Paho Interoperability Test](https://github.com/eclipse/paho.mqtt.testing/tree/master/interoperability) by starting the broker using `examples/paho/main.go`, and then running the test with `python3 client_test.py` from the _interoperability_ folder.
 
 ## Contributions
 Contributions and feedback are both welcomed and encouraged! Open an [issue](https://github.com/snple/mqtt/issues) to report a bug, ask a question, or make a feature request.

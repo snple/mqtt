@@ -72,7 +72,7 @@ func (c *Clients) GetByListener(id string) []*Client {
 	clients := make([]*Client, 0, c.Len())
 	c.RLock()
 	for _, v := range c.internal {
-		if v.Listener == id && atomic.LoadInt64(&v.State.Done) == 0 {
+		if v.Listener == id && atomic.LoadInt32(&v.State.Done) == 0 {
 			clients = append(clients, v)
 		}
 	}
@@ -103,7 +103,7 @@ type Client struct {
 
 // State tracks the state of the client.
 type State struct {
-	Done    int64           // atomic counter which indicates that the client has closed.
+	Done    int32           // atomic counter which indicates that the client has closed.
 	started *sync.WaitGroup // tracks the goroutines which have been started.
 	endedW  *sync.WaitGroup // tracks when the writer has ended.
 	endedR  *sync.WaitGroup // tracks when the reader has ended.
@@ -240,7 +240,7 @@ func (c *Client) Start() {
 
 // Stop instructs the client to shut down all processing goroutines and disconnect.
 func (c *Client) Stop() {
-	if atomic.LoadInt64(&c.State.Done) == 1 {
+	if atomic.LoadInt32(&c.State.Done) == 1 {
 		return
 	}
 
@@ -252,14 +252,14 @@ func (c *Client) Stop() {
 		c.conn.Close()
 
 		c.State.endedR.Wait()
-		atomic.StoreInt64(&c.State.Done, 1)
+		atomic.StoreInt32(&c.State.Done, 1)
 	})
 }
 
 // Read reads new packets from a client connection
 func (c *Client) Read(h func(*Client, packets.Packet) error) error {
 	for {
-		if atomic.LoadInt64(&c.State.Done) == 1 && c.r.CapDelta() == 0 {
+		if atomic.LoadInt32(&c.State.Done) == 1 && c.r.CapDelta() == 0 {
 			return nil
 		}
 
@@ -390,7 +390,7 @@ func (c *Client) ReadPacket(fh *packets.FixedHeader) (pk packets.Packet, err err
 
 // WritePacket encodes and writes a packet to the client.
 func (cl *Client) WritePacket(pk packets.Packet) (n int, err error) {
-	if atomic.LoadInt64(&cl.State.Done) == 1 {
+	if atomic.LoadInt32(&cl.State.Done) == 1 {
 		return 0, ErrConnectionClosed
 	}
 
