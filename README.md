@@ -37,9 +37,9 @@ func main() {
 
     // Add the listener to the server.
     err := server.AddListener(tcp)
-	if err != nil {
-		log.Fatal(err)
-	}
+    if err != nil {
+        log.Fatal(err)
+    }
 
     // Start the broker. Serve() is blocking - see examples folder
     // for usage ideas.

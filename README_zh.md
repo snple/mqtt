@@ -35,9 +35,9 @@ func main() {
 
     // 添加监听器至服务器.
     err := server.AddListener(tcp)
-	if err != nil {
-		log.Fatal(err)
-	}
+    if err != nil {
+        log.Fatal(err)
+    }
 
     // 启动服务器. Serve() 函数是阻塞的 - 请参阅示例文件以了解使用方法
     err = server.Serve()
