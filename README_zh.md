@@ -1,6 +1,8 @@
+<img alt="Snple MQTT logo" src="docs/img/logo.png" width="200px">
+
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/snple/mqtt)](https://pkg.go.dev/github.com/snple/mqtt)
 
-# Snple MQTT
+## Snple MQTT
 
 #### 功能概述
 - 兼容 MQTT 3.1.1.
