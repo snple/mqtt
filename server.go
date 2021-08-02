@@ -393,14 +393,14 @@ func (s *Server) processPublish(c *Client, pk packets.Packet) error {
 		return nil
 	}
 
-	s.publishToSubscribers(pk)
+	s.PublishToSubscribers(pk)
 
 	return nil
 }
 
 // publishToSubscribers publishes a publish packet to all subscribers with
 // matching topic filters.
-func (s *Server) publishToSubscribers(pk packets.Packet) {
+func (s *Server) PublishToSubscribers(pk packets.Packet) {
 	subs := s.Topics.Subscribers(pk.TopicName)
 	for id, qos := range subs {
 		if c, ok := s.Clients.Get(id); ok {
@@ -410,12 +410,47 @@ func (s *Server) publishToSubscribers(pk packets.Packet) {
 				out.FixedHeader.Qos = qos
 			}
 
-			s.publishToClient(c, out)
+			s.PublishToClient(c, out)
 		}
 	}
 }
 
-func (s *Server) publishToClient(c *Client, out packets.Packet) {
+func (s *Server) Publish(topic string, payload []byte, qos byte, retain bool) error {
+	pk := packets.Packet{
+		FixedHeader: packets.FixedHeader{
+			Type:   packets.Publish,
+			Retain: retain,
+			Qos:    qos,
+		},
+		TopicName: topic,
+		Payload:   payload,
+	}
+
+	if pk.FixedHeader.Retain {
+		out := pk.PublishCopy()
+		q := s.Topics.RetainMessage(out)
+		atomic.AddInt64(&s.System.Retained, q)
+		if s.Store != nil {
+			if q == 1 {
+				s.Store.WriteRetained(persistence.Message{
+					ID:          "ret_" + out.TopicName,
+					T:           persistence.KRetained,
+					FixedHeader: persistence.FixedHeader(out.FixedHeader),
+					TopicName:   out.TopicName,
+					Payload:     out.Payload,
+				})
+			} else {
+				s.Store.DeleteRetained("ret_" + out.TopicName)
+			}
+		}
+	}
+
+	s.PublishToSubscribers(pk)
+
+	return nil
+}
+
+func (s *Server) PublishToClient(c *Client, out packets.Packet) {
 	if !s.Hook.Push(s, c, &out) {
 		return
 	}
@@ -453,42 +488,7 @@ func (s *Server) publishToClient(c *Client, out packets.Packet) {
 	s.writeClient(c, out)
 }
 
-func (s *Server) Publish(topic string, payload []byte, qos byte, retain bool) error {
-	pk := packets.Packet{
-		FixedHeader: packets.FixedHeader{
-			Type:   packets.Publish,
-			Retain: retain,
-			Qos:    qos,
-		},
-		TopicName: topic,
-		Payload:   payload,
-	}
-
-	if pk.FixedHeader.Retain {
-		out := pk.PublishCopy()
-		q := s.Topics.RetainMessage(out)
-		atomic.AddInt64(&s.System.Retained, q)
-		if s.Store != nil {
-			if q == 1 {
-				s.Store.WriteRetained(persistence.Message{
-					ID:          "ret_" + out.TopicName,
-					T:           persistence.KRetained,
-					FixedHeader: persistence.FixedHeader(out.FixedHeader),
-					TopicName:   out.TopicName,
-					Payload:     out.Payload,
-				})
-			} else {
-				s.Store.DeleteRetained("ret_" + out.TopicName)
-			}
-		}
-	}
-
-	s.publishToSubscribers(pk)
-
-	return nil
-}
-
-func (s *Server) PublishToClient(id string, topic string, payload []byte, qos byte, retain bool) error {
+func (s *Server) PublishToClientByID(id string, topic string, payload []byte, qos byte, retain bool) error {
 	pk := packets.Packet{
 		FixedHeader: packets.FixedHeader{
 			Type:   packets.Publish,
@@ -500,9 +500,7 @@ func (s *Server) PublishToClient(id string, topic string, payload []byte, qos by
 	}
 
 	if c, ok := s.Clients.Get(id); ok {
-		out := pk.PublishCopy()
-
-		s.publishToClient(c, out)
+		s.PublishToClient(c, pk)
 	}
 
 	return nil
@@ -683,7 +681,8 @@ func (s *Server) publishSysTopics() {
 		pk.Payload = []byte(payload)
 		q := s.Topics.RetainMessage(pk.PublishCopy())
 		atomic.AddInt64(&s.System.Retained, q)
-		s.publishToSubscribers(pk)
+
+		s.PublishToSubscribers(pk)
 	}
 
 	if s.Store != nil {
