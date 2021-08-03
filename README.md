@@ -101,19 +101,19 @@ Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for
 ```go
 
     server.Publish(
-		"time", // topic
-		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
-		1,     // qos
-		false, // retain
-	)
+        "time", // topic
+        []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+        1,     // qos
+        false, // retain
+    )
 
-	server.PublishToClientByID(
-		"mqtt_123456", // client id
-		"time",        // topic
-		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
-		1,     // qos
-		false, // retain
-	)
+    server.PublishToClientByID(
+        "mqtt_123456", // client id
+        "time",        // topic
+        []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+        1,     // qos
+        false, // retain
+    )
 
 ```
 
