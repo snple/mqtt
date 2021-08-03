@@ -12,12 +12,12 @@
 - TCP, Websocket, (包括 SSL/TLS).
 - 客户端认证和 ACL.
 - 基于 Bolt 的数据持久化和存储接口.
+- 服务器发布 (Publish, PublishToClientByID, ...).
 - 事件钩子 (Recv, Send, ...), 可查看 `hook.go`.
-- 发布接口 (Publish, PublishToClient).
 
 #### 路线图
 
-- 改进事件钩子机制和发布接口
+- 改进事件钩子机制和服务器发布接口
 - 支持 MQTT v5
 
 #### 快速开始
@@ -93,6 +93,31 @@ Snple MQTT 提供了 `persistence.Store` 接口用于开发和附加数据持久
 > Persistence is on-demand (not flushed) and will potentially reduce throughput when compared to the standard in-memory store. Only use it if you need to maintain state through restarts.
 
 > 与标准的内存存储相比，持久化有可能会降低吞吐量。仅用于你在重启时需要保存状态的时候.
+
+#### 服务器发布
+
+Snple MQTT 提供了 `Publish`, `PublishToClientByID` 等接口,用于从服务器直接发布消息.
+
+```go
+
+    server.Publish(
+		"time", // topic
+		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+		1,     // qos
+		false, // retain
+	)
+
+	server.PublishToClientByID(
+		"mqtt_123456", // client id
+		"time",        // topic
+		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+		1,     // qos
+		false, // retain
+	)
+
+```
+
+使用 `PublishToClientByID`,你可以将消息发布至指定客户端,即使客户端未订阅. (就看你的客户端是否会处理未订阅的消息.)
 
 ## 贡献
 

@@ -14,12 +14,12 @@
 - TCP, Websocket, (including SSL/TLS).
 - Interfaces for Client Authentication and Topic access control.
 - Bolt-backed persistence and storage interfaces.
+- Server Publish (Publish, PublishToClientByID, ...).
 - Event hooks (Recv, Send, ...), see `hook.go`.
-- Publish interface (Publish, PublishToClient).
 
 #### Roadmap
 
-- Improve event hooks and publish interface
+- Improve event hooks and server publish interface
 - MQTT v5 compatibility
 
 #### Quick Start
@@ -93,6 +93,31 @@ Snple MQTT provides a `persistence.Store` interface for developing and attaching
     }
 ```
 > Persistence is on-demand (not flushed) and will potentially reduce throughput when compared to the standard in-memory store. Only use it if you need to maintain state through restarts.
+
+#### Server publish
+
+Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for publishing messages directly from the server.
+
+```go
+
+    server.Publish(
+		"time", // topic
+		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+		1,     // qos
+		false, // retain
+	)
+
+	server.PublishToClientByID(
+		"mqtt_123456", // client id
+		"time",        // topic
+		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+		1,     // qos
+		false, // retain
+	)
+
+```
+
+With `PublishToClientByID`, you can publish a message to a specified client, even if the client is not subscribed. (It depends on whether your client will handle unsubscribed messages.)
 
 ## Contributions
 Contributions and feedback are both welcomed and encouraged! Open an [issue](https://github.com/snple/mqtt/issues) to report a bug, ask a question, or make a feature request.
