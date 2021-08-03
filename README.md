@@ -96,7 +96,7 @@ Snple MQTT provides a `persistence.Store` interface for developing and attaching
 
 #### Server publish
 
-Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for publishing messages directly from the server.
+Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for publish messages directly from the server.
 
 ```go
 
@@ -117,7 +117,7 @@ Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for
 
 ```
 
-With `PublishToClientByID`, you can publish a message to a specified client, even if the client is not subscribed. (It depends on whether your client will handle unsubscribed messages.)
+With `PublishToClientByID`, you can publish messages to specified client, even if the client is not subscribed. (It depends on whether your client will handle unsubscribed messages.)
 
 ## Contributions
 Contributions and feedback are both welcomed and encouraged! Open an [issue](https://github.com/snple/mqtt/issues) to report a bug, ask a question, or make a feature request.
