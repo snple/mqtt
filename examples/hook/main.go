@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/snple/mqtt"
@@ -56,24 +57,53 @@ type MyHook struct {
 
 var _ mqtt.Hook = (*MyHook)(nil)
 
-func (*MyHook) Accept(*mqtt.Server, *mqtt.Client) bool {
+func (*MyHook) Connect(_ *mqtt.Server, client *mqtt.Client) bool {
+	log.Printf("Client connect: %v, addr: %v", client.ID, client.RemoteAddr())
+
 	return true
 }
 
-func (*MyHook) Remove(*mqtt.Server, *mqtt.Client, error) {}
+func (*MyHook) DisConnect(_ *mqtt.Server, client *mqtt.Client, err error) {
+	log.Printf("Client disconnect: %v, addr: %v", client.ID, client.RemoteAddr())
+	if err != nil {
+		log.Printf("Client disconnect: %v, err: %v", client.ID, err)
+	}
+}
 
-func (*MyHook) Recv(*mqtt.Server, *mqtt.Client, *packets.Packet) bool {
+func (*MyHook) Recv(_ *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+	switch pk.FixedHeader.Type {
+	case packets.Subscribe:
+		log.Printf("Client subscribe: %v, topic: %v", client.ID, pk.Topics)
+	}
 	return true
 }
 
-func (*MyHook) Send(*mqtt.Server, *mqtt.Client, *packets.Packet) bool {
+func (*MyHook) Send(_ *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+	switch pk.FixedHeader.Type {
+	case packets.Suback:
+		log.Printf("Client suback: %v, packet id: %v", client.ID, pk.PacketID)
+	}
 	return true
 }
 
-func (*MyHook) Emit(*mqtt.Server, *mqtt.Client, *packets.Packet) bool {
+func (*MyHook) Emit(server *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+	log.Printf("Client publish: %v, topic: %v, payload:%v", client.ID, pk.TopicName, pk.Payload)
+
+	if pk.TopicName == "time" {
+		server.PublishToClientByID(
+			client.ID,  // client id
+			"time_ack", // topic
+			[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+			1,     // qos
+			false, // retain
+		)
+	}
+
 	return true
 }
 
-func (*MyHook) Push(*mqtt.Server, *mqtt.Client, *packets.Packet) bool {
+func (*MyHook) Push(_ *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+	log.Printf("Server push: %v, topic: %v, payload:%v", client.ID, pk.TopicName, pk.Payload)
+
 	return true
 }

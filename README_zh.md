@@ -101,23 +101,77 @@ Snple MQTT 提供了 `Publish`, `PublishToClientByID` 等接口,用于从服务�
 ```go
 
     server.Publish(
-		"time", // topic
-		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
-		1,     // qos
-		false, // retain
-	)
+        "time", // topic
+        []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+        1,     // qos
+        false, // retain
+    )
 
-	server.PublishToClientByID(
-		"mqtt_123456", // client id
-		"time",        // topic
-		[]byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
-		1,     // qos
-		false, // retain
-	)
+    server.PublishToClientByID(
+        "mqtt_123456", // client id
+        "time",        // topic
+        []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+        1,     // qos
+        false, // retain
+    )
 
 ```
 
-使用 `PublishToClientByID`,你可以将消息发布至指定客户端,即使客户端未订阅. (就看你的客户端是否会处理未订阅的消息.)
+使用 `PublishToClientByID`, 你可以将消息发布至指定客户端, 即使客户端未订阅. (就看你的客户端是否会处理未订阅的消息.)
+
+#### 服务器 Hook 接口
+
+Snple MQTT 提供了 Hook 接口用于扩展服务器功能.
+
+```go
+type Hook interface {
+    // 当客户端连接到服务器
+    // 如果返回 false， 客户端会被拒绝
+    Connect(*Server, *Client) bool
+
+    // 当客户端断开时
+    DisConnect(*Server, *Client, error)
+
+    // 当服务器收到一个数据包
+    // 如果返回 false，该操作会被取消
+    Recv(*Server, *Client, *packets.Packet) bool
+
+    // 当服务器发送一个数据包
+    // 如果返回 false，该操作会被取消
+    Send(*Server, *Client, *packets.Packet) bool
+
+    // 当服务器收到客户端发布的消息
+    // 如果返回 false，该操作会被取消
+    Emit(*Server, *Client, *packets.Packet) bool
+
+    // 当服务器向客户端推送消息
+    // 如果返回 false，该操作会被取消
+    Push(*Server, *Client, *packets.Packet) bool
+}
+```
+
+利用该接口, 你可以更方便地进行调试, 并且:
+
+```go
+func (*MyHook) Emit(server *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+    log.Printf("Client publish: %v, topic: %v, payload:%v", client.ID, pk.TopicName, pk.Payload)
+
+    if pk.TopicName == "time" {
+        server.PublishToClientByID(
+            client.ID,  // client id
+            "time_ack", // topic
+            []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+            1,     // qos
+            false, // retain
+        )
+    }
+
+    return true
+}
+
+```
+
+这段代码演示了, 当客户端向服务器发送 `topic` 为 “time” 的消息时, 服务器直接给该客户端一个反馈.
 
 ## 贡献
 

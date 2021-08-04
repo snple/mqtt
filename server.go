@@ -167,7 +167,7 @@ func (s *Server) EstablishConnection(listenerID string, c net.Conn, auth Auth) e
 	retcode, _ := pk.ConnectValidate()
 
 	if retcode == packets.Accepted {
-		if !auth.Auth(client) || !s.Hook.Accept(s, client) {
+		if !auth.Auth(client) || !s.Hook.Connect(s, client) {
 			retcode = packets.CodeConnectBadAuthValues
 		}
 	}
@@ -247,9 +247,10 @@ func (s *Server) EstablishConnection(listenerID string, c net.Conn, auth Auth) e
 
 	err = client.Read(s.processPacket)
 	if err != nil {
-		s.Hook.Remove(s, client, err)
 		s.closeClient(client, true)
 	}
+
+	s.Hook.DisConnect(s, client, err)
 
 	atomic.AddInt64(&s.System.ClientsConnected, -1)
 	atomic.AddInt64(&s.System.ClientsDisconnected, 1)

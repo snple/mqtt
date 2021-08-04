@@ -389,13 +389,13 @@ func (c *Client) ReadPacket(fh *packets.FixedHeader) (pk packets.Packet, err err
 }
 
 // WritePacket encodes and writes a packet to the client.
-func (cl *Client) WritePacket(pk packets.Packet) (n int, err error) {
-	if atomic.LoadInt32(&cl.State.Done) == 1 {
+func (c *Client) WritePacket(pk packets.Packet) (n int, err error) {
+	if atomic.LoadInt32(&c.State.Done) == 1 {
 		return 0, ErrConnectionClosed
 	}
 
-	cl.w.Mu.Lock()
-	defer cl.w.Mu.Unlock()
+	c.w.Mu.Lock()
+	defer c.w.Mu.Unlock()
 
 	buf := new(bytes.Buffer)
 	switch pk.FixedHeader.Type {
@@ -406,7 +406,7 @@ func (cl *Client) WritePacket(pk packets.Packet) (n int, err error) {
 	case packets.Publish:
 		err = pk.PublishEncode(buf)
 		if err == nil {
-			atomic.AddInt64(&cl.system.PublishSent, 1)
+			atomic.AddInt64(&c.system.PublishSent, 1)
 		}
 	case packets.Puback:
 		err = pk.PubackEncode(buf)
@@ -437,16 +437,26 @@ func (cl *Client) WritePacket(pk packets.Packet) (n int, err error) {
 		return
 	}
 
-	n, err = cl.w.Write(buf.Bytes())
+	n, err = c.w.Write(buf.Bytes())
 	if err != nil {
 		return
 	}
-	atomic.AddInt64(&cl.system.BytesSent, int64(n))
-	atomic.AddInt64(&cl.system.MessagesSent, 1)
+	atomic.AddInt64(&c.system.BytesSent, int64(n))
+	atomic.AddInt64(&c.system.MessagesSent, 1)
 
-	cl.refreshDeadline(cl.keepalive)
+	c.refreshDeadline(c.keepalive)
 
 	return
+}
+
+// LocalAddr returns the local network address.
+func (c *Client) LocalAddr() net.Addr {
+	return c.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote network address.
+func (c *Client) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
 }
 
 // LWT contains the last will and testament details for a client connection.

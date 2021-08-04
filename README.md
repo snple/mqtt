@@ -119,5 +119,59 @@ Snple MQTT provides interfaces such as `Publish`, `PublishToClientByID` etc. for
 
 With `PublishToClientByID`, you can publish messages to specified client, even if the client is not subscribed. (It depends on whether your client will handle unsubscribed messages.)
 
+#### Server Hook interface
+
+Snple MQTT provides a Hook interface for extending server functionality.
+
+```go
+type Hook interface {
+	// When the client connects to the server
+	// If the return is false, the client will be rejected.
+	Connect(*Server, *Client) bool
+
+	// When the client disconnects
+	DisConnect(*Server, *Client, error)
+
+	// When the server receives a packet.
+	// If the return is false, it will cancel the operation.
+	Recv(*Server, *Client, *packets.Packet) bool
+
+	// When the server sends a packet.
+	// If the return is false, it will cancel the operation.
+	Send(*Server, *Client, *packets.Packet) bool
+
+	// When the server receives a message from the client publish.
+	// If the return is false, it will cancel the operation.
+	Emit(*Server, *Client, *packets.Packet) bool
+
+	// When the server pushes a message to the client
+	// If the return is false, it will cancel the operation.
+	Push(*Server, *Client, *packets.Packet) bool
+}
+```
+
+With this interface, you can debug more easily, and:
+
+```go
+func (*MyHook) Emit(server *mqtt.Server, client *mqtt.Client, pk *packets.Packet) bool {
+    log.Printf("Client publish: %v, topic: %v, payload:%v", client.ID, pk.TopicName, pk.Payload)
+
+    if pk.TopicName == "time" {
+        server.PublishToClientByID(
+            client.ID,  // client id
+            "time_ack", // topic
+            []byte(fmt.Sprintf(`{"time": "%s"}`, time.Now().Format(time.RFC3339))), // payload
+            1,     // qos
+            false, // retain
+        )
+    }
+
+    return true
+}
+
+```
+
+This code demonstrates that when a client sends a message with `topic` of "time" to the server, the server gives direct feedback to the client.
+
 ## Contributions
 Contributions and feedback are both welcomed and encouraged! Open an [issue](https://github.com/snple/mqtt/issues) to report a bug, ask a question, or make a feature request.
