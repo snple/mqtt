@@ -6,6 +6,8 @@
 
 [简体中文](README_zh.md)
 
+Note: The API of this library is still unstable and has not been sufficiently tested, please do not use it in production environments.
+
 #### Features
 - MQTT 3.1.1 compatible.
 - Full MQTT Feature-set (QoS, Retained, $SYS)
