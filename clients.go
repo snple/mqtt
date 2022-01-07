@@ -90,7 +90,7 @@ type Client struct {
 	AC            Auth                 // an auth controller inherited from the listener.
 	Subscriptions topics.Subscriptions // a map of the subscription filters a client maintains.
 	Listener      string               // the id of the listener the client is connected to.
-	Inflight      Inflight             // a map of in-flight qos messages.
+	Inflight      *Inflight            // a map of in-flight qos messages.
 	Username      []byte               // the username the client authenticated with.
 	Password      []byte               // the password the client authenticated with.
 	keepalive     uint16               // the number of seconds the connection can wait.
@@ -113,14 +113,12 @@ type State struct {
 // NewClient returns a new instance of Client.
 func NewClient(c net.Conn, r *circ.Reader, w *circ.Writer, s *system.Info) *Client {
 	client := &Client{
-		conn:      c,
-		r:         r,
-		w:         w,
-		system:    s,
-		keepalive: defaultKeepalive,
-		Inflight: Inflight{
-			internal: make(map[uint16]InflightMessage),
-		},
+		conn:          c,
+		r:             r,
+		w:             w,
+		system:        s,
+		keepalive:     defaultKeepalive,
+		Inflight:      NewInflight(),
 		Subscriptions: make(map[string]byte),
 		State: State{
 			started: new(sync.WaitGroup),
@@ -138,9 +136,7 @@ func NewClient(c net.Conn, r *circ.Reader, w *circ.Writer, s *system.Info) *Clie
 // method is typically called by the persistence restoration system.
 func NewClientStub(s *system.Info) *Client {
 	return &Client{
-		Inflight: Inflight{
-			internal: make(map[uint16]InflightMessage),
-		},
+		Inflight:      NewInflight(),
 		Subscriptions: make(map[string]byte),
 		State: State{
 			Done: 1,
@@ -478,6 +474,12 @@ type InflightMessage struct {
 type Inflight struct {
 	sync.RWMutex
 	internal map[uint16]InflightMessage // internal contains the inflight messages.
+}
+
+func NewInflight() *Inflight {
+	return &Inflight{
+		internal: make(map[uint16]InflightMessage),
+	}
 }
 
 // Set stores the packet of an Inflight message, keyed on message id. Returns

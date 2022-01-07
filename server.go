@@ -416,7 +416,7 @@ func (s *Server) PublishToSubscribers(pk packets.Packet) {
 	}
 }
 
-func (s *Server) Publish(topic string, payload []byte, qos byte, retain bool) error {
+func (s *Server) Publish(topic string, payload []byte, qos byte, retain bool) {
 	pk := packets.Packet{
 		FixedHeader: packets.FixedHeader{
 			Type:   packets.Publish,
@@ -447,8 +447,6 @@ func (s *Server) Publish(topic string, payload []byte, qos byte, retain bool) er
 	}
 
 	s.PublishToSubscribers(pk)
-
-	return nil
 }
 
 func (s *Server) PublishToClient(c *Client, out packets.Packet) {

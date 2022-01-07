@@ -1328,14 +1328,14 @@ func TestServerLoadSubscriptions(t *testing.T) {
 	s.Clients.Add(cl)
 
 	subs := []persistence.Subscription{
-		persistence.Subscription{
+		{
 			ID:     "test:a/b/c",
 			Client: "test",
 			Filter: "a/b/c",
 			QoS:    1,
 			T:      persistence.KSubscription,
 		},
-		persistence.Subscription{
+		{
 			ID:     "test:d/e/f",
 			Client: "test",
 			Filter: "d/e/f",
@@ -1354,13 +1354,13 @@ func TestServerLoadClients(t *testing.T) {
 	require.NotNil(t, s)
 
 	clients := []persistence.Client{
-		persistence.Client{
+		{
 			ID:       "cl_client1",
 			ClientID: "client1",
 			T:        persistence.KClient,
 			Listener: "tcp1",
 		},
-		persistence.Client{
+		{
 			ID:       "cl_client2",
 			ClientID: "client2",
 			T:        persistence.KClient,
@@ -1385,7 +1385,7 @@ func TestServerLoadInflight(t *testing.T) {
 	require.NotNil(t, s)
 
 	msgs := []persistence.Message{
-		persistence.Message{
+		{
 			ID:        "client1_if_0",
 			T:         persistence.KInflight,
 			Client:    "client1",
@@ -1395,7 +1395,7 @@ func TestServerLoadInflight(t *testing.T) {
 			Sent:      100,
 			Resends:   0,
 		},
-		persistence.Message{
+		{
 			ID:        "client1_if_100",
 			T:         persistence.KInflight,
 			Client:    "client1",
@@ -1430,7 +1430,7 @@ func TestServerLoadRetained(t *testing.T) {
 	require.NotNil(t, s)
 
 	msgs := []persistence.Message{
-		persistence.Message{
+		{
 			ID: "client1_ret_200",
 			T:  persistence.KRetained,
 			FixedHeader: persistence.FixedHeader{
@@ -1442,7 +1442,7 @@ func TestServerLoadRetained(t *testing.T) {
 			Sent:      100,
 			Resends:   0,
 		},
-		persistence.Message{
+		{
 			ID: "client1_ret_300",
 			T:  persistence.KRetained,
 			FixedHeader: persistence.FixedHeader{
