@@ -22,7 +22,7 @@ type HTTPStats struct {
 	address    string       // the network address to bind to.
 	httpServer *http.Server // the http server.
 	tls        *tls.Config
-	end        int64 // ensure the close methods are only called once.}
+	end        int32 // ensure the close methods are only called once.}
 }
 
 // NewHTTPStats initialises and returns a new HTTP listener, listening on an address.
@@ -83,8 +83,8 @@ func (l *HTTPStats) Serve(establish mqtt.EstablishFunc) error {
 
 // Close closes the listener and any client connections.
 func (l *HTTPStats) Close(closeClients mqtt.CloseFunc) {
-	if atomic.LoadInt64(&l.end) == 0 {
-		atomic.StoreInt64(&l.end, 1)
+	if atomic.LoadInt32(&l.end) == 0 {
+		atomic.StoreInt32(&l.end, 1)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

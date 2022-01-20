@@ -4,8 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"fmt"
-
 	"github.com/asdine/storm/v3"
 	"github.com/asdine/storm/v3/codec/gob"
 	"github.com/snple/mqtt/persistence"
@@ -254,7 +252,6 @@ func (s *Store) ReadServerInfo() (v persistence.ServerInfo, err error) {
 	}
 
 	err = s.db.One("ID", persistence.KServerInfo, &v)
-	fmt.Println(err)
 	if err != nil && err.Error() != errNotFound {
 		return
 	}

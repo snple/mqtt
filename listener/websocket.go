@@ -33,7 +33,7 @@ type Websocket struct {
 	httpServer *http.Server // an http server for serving websocket connections.
 	auth       mqtt.Auth
 	tls        *tls.Config
-	end        int64              // ensure the close methods are only called once.
+	end        int32              // ensure the close methods are only called once.
 	establish  mqtt.EstablishFunc // the server's establish conection handler.
 }
 
@@ -159,8 +159,8 @@ func (l *Websocket) Serve(establish mqtt.EstablishFunc) error {
 
 // Close closes the listener and any client connections.
 func (l *Websocket) Close(closeClients mqtt.CloseFunc) {
-	if atomic.LoadInt64(&l.end) == 0 {
-		atomic.StoreInt64(&l.end, 1)
+	if atomic.LoadInt32(&l.end) == 0 {
+		atomic.StoreInt32(&l.end, 1)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		l.httpServer.Shutdown(ctx)

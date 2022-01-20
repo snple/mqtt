@@ -339,7 +339,7 @@ func TestClientReadFixedHeader(t *testing.T) {
 	fh := new(packets.FixedHeader)
 	err := cl.ReadFixedHeader(fh)
 	require.NoError(t, err)
-	require.Equal(t, int64(2), atomic.LoadInt64(&cl.system.BytesRecv))
+	require.Equal(t, int32(2), atomic.LoadInt32(&cl.system.BytesRecv))
 
 	tail, head := cl.r.GetPos()
 	require.Equal(t, int32(2), tail)
@@ -455,8 +455,8 @@ func TestClientReadOK(t *testing.T) {
 		},
 	})
 
-	require.Equal(t, int64(len(b)), atomic.LoadInt64(&cl.system.BytesRecv))
-	require.Equal(t, int64(2), atomic.LoadInt64(&cl.system.MessagesRecv))
+	require.Equal(t, int32(len(b)), atomic.LoadInt32(&cl.system.BytesRecv))
+	require.Equal(t, int32(2), atomic.LoadInt32(&cl.system.MessagesRecv))
 
 }
 
@@ -573,7 +573,7 @@ func TestClientReadPacket(t *testing.T) {
 
 		require.Equal(t, tt.packet, pk, "Mismatched packet: [i:%d] %d", i, tt.bytes[0])
 		if tt.packet.FixedHeader.Type == packets.Publish {
-			require.Equal(t, int64(1), atomic.LoadInt64(&cl.system.PublishRecv))
+			require.Equal(t, int32(1), atomic.LoadInt32(&cl.system.PublishRecv))
 		}
 	}
 }
@@ -646,10 +646,10 @@ func TestClientWritePacket(t *testing.T) {
 
 		require.Equal(t, tt.bytes, <-o, "Mismatched packet: [i:%d] %d", i, tt.bytes[0])
 		cl.Stop()
-		require.Equal(t, int64(n), atomic.LoadInt64(&cl.system.BytesSent))
-		require.Equal(t, int64(1), atomic.LoadInt64(&cl.system.MessagesSent))
+		require.Equal(t, int32(n), atomic.LoadInt32(&cl.system.BytesSent))
+		require.Equal(t, int32(1), atomic.LoadInt32(&cl.system.MessagesSent))
 		if tt.packet.FixedHeader.Type == packets.Publish {
-			require.Equal(t, int64(1), atomic.LoadInt64(&cl.system.PublishSent))
+			require.Equal(t, int32(1), atomic.LoadInt32(&cl.system.PublishSent))
 		}
 	}
 }
@@ -762,7 +762,7 @@ func TestInflightDelete(t *testing.T) {
 
 	q := cl.Inflight.Delete(3)
 	require.Equal(t, true, q)
-	require.Equal(t, int64(0), cl.Inflight.internal[3].Sent)
+	require.Equal(t, int32(0), cl.Inflight.internal[3].Sent)
 
 	_, ok := cl.Inflight.Get(3)
 	require.Equal(t, false, ok)

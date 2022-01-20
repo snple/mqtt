@@ -322,14 +322,14 @@ func (c *Client) ReadFixedHeader(fh *packets.FixedHeader) error {
 
 	// Having successfully read n bytes, commit the tail forward.
 	c.r.CommitTail(n)
-	atomic.AddInt64(&c.system.BytesRecv, int64(n))
+	atomic.AddInt32(&c.system.BytesRecv, int32(n))
 
 	return nil
 }
 
 // ReadPacket reads the remaining buffer into an MQTT packet.
 func (c *Client) ReadPacket(fh *packets.FixedHeader) (pk packets.Packet, err error) {
-	atomic.AddInt64(&c.system.MessagesRecv, 1)
+	atomic.AddInt32(&c.system.MessagesRecv, 1)
 
 	pk.FixedHeader = *fh
 	if pk.FixedHeader.Remaining == 0 {
@@ -340,7 +340,7 @@ func (c *Client) ReadPacket(fh *packets.FixedHeader) (pk packets.Packet, err err
 	if err != nil {
 		return pk, err
 	}
-	atomic.AddInt64(&c.system.BytesRecv, int64(len(p)))
+	atomic.AddInt32(&c.system.BytesRecv, int32(len(p)))
 
 	// Decode the remaining packet values using a fresh copy of the bytes,
 	// otherwise the next packet will change the data of this one.
@@ -354,7 +354,7 @@ func (c *Client) ReadPacket(fh *packets.FixedHeader) (pk packets.Packet, err err
 	case packets.Publish:
 		err = pk.PublishDecode(px)
 		if err == nil {
-			atomic.AddInt64(&c.system.PublishRecv, 1)
+			atomic.AddInt32(&c.system.PublishRecv, 1)
 		}
 	case packets.Puback:
 		err = pk.PubackDecode(px)
@@ -402,7 +402,7 @@ func (c *Client) WritePacket(pk packets.Packet) (n int, err error) {
 	case packets.Publish:
 		err = pk.PublishEncode(buf)
 		if err == nil {
-			atomic.AddInt64(&c.system.PublishSent, 1)
+			atomic.AddInt32(&c.system.PublishSent, 1)
 		}
 	case packets.Puback:
 		err = pk.PubackEncode(buf)
@@ -437,8 +437,8 @@ func (c *Client) WritePacket(pk packets.Packet) (n int, err error) {
 	if err != nil {
 		return
 	}
-	atomic.AddInt64(&c.system.BytesSent, int64(n))
-	atomic.AddInt64(&c.system.MessagesSent, 1)
+	atomic.AddInt32(&c.system.BytesSent, int32(n))
+	atomic.AddInt32(&c.system.MessagesSent, 1)
 
 	c.refreshDeadline(c.keepalive)
 

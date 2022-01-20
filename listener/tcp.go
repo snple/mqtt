@@ -15,7 +15,7 @@ type TCP struct {
 	listen  net.Listener
 	auth    mqtt.Auth
 	tls     *tls.Config
-	end     int64
+	end     int32
 }
 
 // NewTCP initialises and returns a new TCP listener, listening on an address.
@@ -73,7 +73,7 @@ func (l *TCP) Listen(s *system.Info) error {
 
 func (l *TCP) Serve(establish mqtt.EstablishFunc) error {
 	for {
-		if atomic.LoadInt64(&l.end) == 1 {
+		if atomic.LoadInt32(&l.end) == 1 {
 			return nil
 		}
 
@@ -82,7 +82,7 @@ func (l *TCP) Serve(establish mqtt.EstablishFunc) error {
 			return err
 		}
 
-		if atomic.LoadInt64(&l.end) == 0 {
+		if atomic.LoadInt32(&l.end) == 0 {
 			go establish(l.id, conn, l.auth)
 		}
 	}
@@ -90,8 +90,8 @@ func (l *TCP) Serve(establish mqtt.EstablishFunc) error {
 
 // Close closes the listener and any client connections.
 func (l *TCP) Close(closeClients mqtt.CloseFunc) {
-	if atomic.LoadInt64(&l.end) == 0 {
-		atomic.StoreInt64(&l.end, 1)
+	if atomic.LoadInt32(&l.end) == 0 {
+		atomic.StoreInt32(&l.end, 1)
 		closeClients(l.id)
 	}
 
